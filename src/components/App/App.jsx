@@ -1,101 +1,127 @@
-import React from 'react';
-import { nanoid } from 'nanoid';
-import { ContactForm } from 'components/ContactForm/ContactForm';
-import { Filter } from 'components/Filter/Filter';
-import { ContactList } from 'components/ContactList/ContactList';
-import { Container, Section, Titleh1, Titleh2 } from './App.styled';
+import { Component } from 'react';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-export class App extends React.Component {
+import { fetchData } from 'services/PixabayApi';
+import { SearchBar } from 'components/Searchbar/Searchbar';
+import { ImageGallery } from 'components/ImageGallery/ImageGallery';
+import { Button } from 'components/Button/Button';
+import { Modal } from 'components/Modal/Modal';
+import { Loader } from 'components/Loader/Loader';
+import { Container } from './App.styled';
+
+export class App extends Component {
   state = {
-    contacts: [
-      { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
-      { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
-      { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
-      { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
-    ],
-    filter: '',
+    images: [],
+    isLoading: false,
+    query: '',
+    error: null,
+    page: 1,
+    showModal: false,
+    largeImageURL: null,
   };
-
-  componentDidMount() {
-    const contacts = localStorage.getItem('contacts');
-    const parsedContacts = JSON.parse(contacts);
-
-    if (parsedContacts) {
-      this.setState({ contacts: parsedContacts });
-    }
-  }
 
   componentDidUpdate(prevProps, prevState) {
-    const prevContacts = prevState.contacts;
-    const nextContacts = this.state.contacts;
+    const prevQuery = prevState.query;
+    const nextQuery = this.state.query;
+    const { page } = this.state;
 
-    if (nextContacts !== prevContacts) {
-      localStorage.setItem('contacts', JSON.stringify(nextContacts));
+    if (prevQuery !== nextQuery || (prevState.page !== page && page !== 1)) {
+      this.fetchImages();
     }
   }
 
+  fetchImages = () => {
+    const { query, page } = this.state;
+    const perPage = 12;
 
-    // Додає контакт в список
-  addContact = ({ name, number }) => {
-    const normalizedFind = name.toLowerCase();
-    const findName = this.state.contacts.find(
-      contact => contact.name.toLowerCase() === normalizedFind
-    );
-    if (findName) {
-      return alert(`${name} is already in contacts.`);
-    }
+    this.setState({ isLoading: true });
 
-    const findNumber = this.state.contacts.find(
-      contact => contact.number === number
-    );
-    if (findNumber) {
-      return alert(`This phone number is already in use.`);
-    }
+    fetchData(query, page, perPage)
+      .then(({ hits, totalHits }) => {
+        const totalPages = Math.ceil(totalHits / perPage);
 
-    this.setState(({ contacts }) => ({
-      contacts: [{ name, number, id: nanoid() }, ...contacts],
+        if (hits.length === 0) {
+          return toast.error('Sorry, no images found. Please, try again!');
+        }
+
+        if (page === 1) {
+          toast.success(` We found ${totalHits} images.`);
+        }
+
+        if (page === totalPages) {
+          toast.info("You've reached the end of search results.");
+        }
+
+        const data = hits.map(({ id, webformatURL, largeImageURL, tags }) => {
+          return {
+            id,
+            webformatURL,
+            largeImageURL,
+            tags,
+          };
+        });
+        this.setState(({ images }) => ({
+          images: [...images, ...data],
+          total: totalHits,
+        }));
+      })
+      .catch(error => this.setState({ error }))
+      .finally(() => this.setState({ isLoading: false }));
+  };
+
+  handleSearch = query => {
+    if (query === this.state.query) return;
+    this.setState({
+      images: [],
+      query,
+      page: 1,
+      error: null,
+    });
+  };
+
+  onLoadMore = () => {
+    this.setState(({ page }) => ({
+      page: page + 1,
+      isLoading: true,
     }));
   };
 
-  // Вертає результат фільтра
-  getContacts = () => {
-    const { filter, contacts } = this.state;
-    const normalizedFilter = filter.toLowerCase();
-    return contacts.filter(contact =>
-      contact.name.toLowerCase().includes(normalizedFilter)
-    );
-  };
-
-  // Видаляємо контакт з списку
-  deleteContact = contactId => {
-    this.setState(prevState => ({
-      contacts: prevState.contacts.filter(contact => contact.id !== contactId),
+  toggleModal = largeImageURL => {
+    this.setState(({ showModal }) => ({
+      showModal: !showModal,
     }));
-  };
-
-  handleFilter = e => {
-    const { name, value } = e.currentTarget;
-    this.setState({ [name]: value });
+    this.setState({ largeImageURL: largeImageURL });
   };
 
   render() {
-    const { filter } = this.state;
-    const visibleContacts = this.getContacts();
+    const { images, error, isLoading, showModal, largeImageURL, tags, total } =
+      this.state;
+    const loadImages = images.length !== 0;
+    const isLastPage = images.length === total;
+    const loadMoreBtn = loadImages && !isLoading && !isLastPage;
 
     return (
       <Container>
-        <Section title="Phonebook">
-          <Titleh1>Phonebook</Titleh1>
-          <ContactForm onSubmit={this.addContact} />
-        </Section>
-        <Section title="Contacts">
-          <Titleh2>Contacts</Titleh2>
-          <Filter value={filter} onChange={this.handleFilter} />
-          <ContactList
-            contacts={visibleContacts}
-            onDeleteContact={this.deleteContact}
-          />
-        </Section>
+        <SearchBar onSubmit={this.handleSearch} />
+
+        {error && toast.error(error.message)}
+
+        {isLoading && <Loader />}
+
+        {loadImages && (
+          <ImageGallery images={images} onClick={this.toggleModal} />
+        )}
+
+            {showModal && (
+          <Modal onClose={this.toggleModal}>
+            <img src={largeImageURL} alt={tags} />
+          </Modal>
+        )}
+
+        {loadMoreBtn && <Button text="Load more"   onClick={this.onLoadMore}></Button>}
+
+        <ToastContainer theme="colored" position="top-right" autoClose={3000} />
       </Container>
     );
   }
