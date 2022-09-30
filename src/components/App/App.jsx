@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -10,37 +10,31 @@ import { Modal } from 'components/Modal/Modal';
 import { Loader } from 'components/Loader/Loader';
 import { Container } from './App.styled';
 
-export class App extends Component {
-  state = {
-    images: [],
-    isLoading: false,
-    query: '',
-    error: null,
-    page: 1,
-    showModal: false,
-    largeImageURL: null,
-  };
+export function App() {
+  const [images, setImages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [query, setQuery] = useState('');
+  const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [showModal, setShowModal] = useState(false);
+  const [largeImageURL, setLargeImageUrl] = useState(null);
+            
 
-  componentDidUpdate(prevProps, prevState) {
-    const prevQuery = prevState.query;
-    const nextQuery = this.state.query;
-    const { page } = this.state;
+  useEffect(() => {
+    if (!query) return;
+    fetchImages(query, page);
+  }, [query, page]);
+  
 
-    if (prevQuery !== nextQuery || (prevState.page !== page && page !== 1)) {
-      this.fetchImages();
-    }
-  }
-
-  fetchImages = () => {
-    const { query, page } = this.state;
+  const fetchImages = (query, page) => {
     const perPage = 12;
-
-    this.setState({ isLoading: true });
+    setIsLoading(true);
 
     fetchData(query, page, perPage)
       .then(({ hits, totalHits }) => {
         const totalPages = Math.ceil(totalHits / perPage);
 
+        
         if (hits.length === 0) {
           return toast.error('Sorry, no images found. Please, try again!');
         }
@@ -94,7 +88,7 @@ export class App extends Component {
     this.setState({ largeImageURL: largeImageURL });
   };
 
-  render() {
+ 
     const { images, error, isLoading, showModal, largeImageURL, tags, total } =
       this.state;
     const loadImages = images.length !== 0;
@@ -125,4 +119,4 @@ export class App extends Component {
       </Container>
     );
   }
-}
+
