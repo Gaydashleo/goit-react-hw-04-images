@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { toast } from 'react-toastify';
 import { FcSearch } from 'react-icons/fc';
@@ -9,39 +9,30 @@ import {
   Button,
 } from './SearchBar.styled';
 
-export class SearchBar extends Component {
-  static propTypes = {
-    onSubmit: PropTypes.func.isRequired,
+export function SearchBar({onSubmit})  {
+  const [query, setQuery] = useState('');
+
+  const handleChange = e => {
+    setQuery( e.currentTarget.value );
   };
 
-  state = {
-    query: '',
-  };
-
-  handleChange = e => {
-    this.setState({ query: e.currentTarget.value });
-  };
-
-  handleSubmit = e => {
+  const handleSubmit = e => {
     e.preventDefault();
-    if (this.state.query.trim() === '') {
+    if (query.trim() === '') {
       toast.warn('Please specify your query!');
       return;
     }
-    this.props.onSubmit(this.state.query);
-    this.reset();
+    onSubmit(query);
+    reset();
   };
 
-  reset = () => {
-    this.setState({ query: '' });
+  const reset = () => {
+    setQuery('');
   };
-
-  render() {
-    const { query } = this.state;
 
     return (
       <Header>
-        <Form onSubmit={this.handleSubmit}>
+        <Form onSubmit={handleSubmit}>
           <Button type="submit">
             <FcSearch style={{ width: 30, height: 30 }} />
           </Button>
@@ -50,7 +41,7 @@ export class SearchBar extends Component {
             type="text"
             name="query"
             value={query}
-            onChange={this.handleChange}
+            onChange={handleChange}
             autoComplete="off"
             autoFocus
             placeholder="Search images and photos"
@@ -59,4 +50,7 @@ export class SearchBar extends Component {
       </Header>
     );
   }
-}
+
+  SearchBar.propTypes = {
+    onSubmit: PropTypes.func.isRequired,
+  };

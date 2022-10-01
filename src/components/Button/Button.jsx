@@ -3,10 +3,11 @@ import { StyledButton } from './Button.styled';
 
 export const Button = ( { text, onClick }) => (
   <StyledButton type="button"  onClick={onClick}>
-   {text}
+    {text}
   </StyledButton> 
 );
 
 Button.propTypes = {
+  text: PropTypes.string.isRequired,
   onClick: PropTypes.func.isRequired,
 };
