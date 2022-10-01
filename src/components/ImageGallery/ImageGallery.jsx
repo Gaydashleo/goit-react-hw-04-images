@@ -18,14 +18,14 @@ export const ImageGallery = ({ images, onClick }) => {
   );
 };
 
-  ImageGallery.propTypes = {
-    images: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.number.isRequired,
-        webformatURL: PropTypes.string.isRequired,
-        largeImageURL: PropTypes.string.isRequired,
-        tags: PropTypes.string.isRequired,
-      })
-    ),
-    onClick: PropTypes.func.isRequired,
-  };
+ImageGallery.propTypes = {
+  images: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      webformatURL: PropTypes.string.isRequired,
+      largeImageURL: PropTypes.string.isRequired,
+      tags: PropTypes.string.isRequired,
+    })
+  ),
+  onClick: PropTypes.func.isRequired,
+};
