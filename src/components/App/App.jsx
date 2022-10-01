@@ -25,7 +25,6 @@ export function App() {
     if (!query) return;
     fetchImages(query, page);
   }, [query, page]);
-  
 
   const fetchImages = (query, page) => {
     const perPage = 12;
@@ -61,8 +60,9 @@ export function App() {
       .finally(() => setIsLoading(false ));
   };
 
-  const handleSearch = query => {
-    setQuery(query);
+  const handleSearch = newQuery => {
+    if (query === newQuery) return;
+    setQuery(newQuery);
     setPage(1);
     setImages([]);
     setError(null);
