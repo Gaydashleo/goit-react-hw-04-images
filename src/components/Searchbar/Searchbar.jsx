@@ -23,12 +23,12 @@ export function SearchBar({onSubmit})  {
       return;
     }
     onSubmit(query);
-    reset();
+    // reset();
   };
 
-  const reset = () => {
-    setQuery('');
-  };
+  // const reset = () => {
+  //   setQuery('');
+  // };
 
     return (
       <Header>
